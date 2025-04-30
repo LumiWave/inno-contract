@@ -3,7 +3,7 @@
 
 module lumiwave::LWA {
     use std::option;
-    use sui::coin::{Self, Coin, TreasuryCap, DenyCap};
+    use sui::coin::{Self, Coin, TreasuryCap, DenyCapV2};
     use sui::transfer;
     use sui::url;
     use sui::tx_context::{Self, TxContext};
@@ -24,7 +24,7 @@ module lumiwave::LWA {
         result: u64, // result of the vote => 0:no vote count, 1:agreement, 2:Opposition, 3:Voting invalid
     }
 
-    const MaxSupply: u64 = 1000000000000000000;  // 1 Billion
+    const MaxSupply: u64 = 1_000_000_000_000_000_000;  // 1 Billion
 
     // vote result
     const VOTE_NONE: u64 = 0;       // No vote count
@@ -49,13 +49,14 @@ module lumiwave::LWA {
 
     #[allow(lint(share_owned))]
     fun init(witness: LWA, ctx: &mut TxContext) {
-        let (treasury_cap, deny_cap,  metadata) = coin::create_regulated_currency(
+        let (treasury_cap, deny_cap,  metadata) = coin::create_regulated_currency_v2(
            witness,
            9, 
            b"LWA", 
            b"LUMIWAVE", 
            b"", 
            option::some(url::new_unsafe_from_bytes(b"https://innofile.blob.core.windows.net/inno/live/icon/LUMIWAVE_Primary_black.png")), 
+           false,
            ctx);
         transfer::public_freeze_object(metadata);
 
@@ -94,12 +95,12 @@ module lumiwave::LWA {
 
     // === Public-Mutative Functions ===
     // Register wallets to deny
-    public entry fun add_deny(denylist: &mut DenyList, deny_cap: &mut DenyCap<LWA>, recipient: address, ctx: &mut TxContext) {
-        coin::deny_list_add<LWA>( denylist, deny_cap, recipient, ctx)
+    public entry fun add_deny(denylist: &mut DenyList, deny_cap: &mut DenyCapV2<LWA>, recipient: address, ctx: &mut TxContext) {
+        coin::deny_list_v2_add<LWA>( denylist, deny_cap, recipient, ctx)
     }
     // Release denied wallets
-    public entry fun remove_deny(denylist: &mut DenyList, deny_cap: &mut DenyCap<LWA>, recipient: address, ctx: &mut TxContext){
-        coin::deny_list_remove<LWA>(denylist, deny_cap, recipient, ctx)
+    public entry fun remove_deny(denylist: &mut DenyList, deny_cap: &mut DenyCapV2<LWA>, recipient: address, ctx: &mut TxContext){
+        coin::deny_list_v2_remove<LWA>(denylist, deny_cap, recipient, ctx)
     }
 
     // Additional coin issuance
